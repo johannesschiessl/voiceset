@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
@@ -28,11 +29,16 @@ export default function SettingsPage() {
   const [specializedTerms, setSpecializedTerms] = useState<string[]>([]);
   const [newTerm, setNewTerm] = useState("");
   const [language, setLanguage] = useState("auto");
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [isInstructionsSaved, setIsInstructionsSaved] = useState(false);
 
   useEffect(() => {
     const storedApiKey = localStorage.getItem("groq_api_key") || "";
     const storedTerms = localStorage.getItem("specialized_terms");
     const storedLanguage = localStorage.getItem("language");
+    const storedCustomInstructions = localStorage.getItem(
+      "custom_instructions",
+    );
 
     if (!storedLanguage) {
       localStorage.setItem("language", "auto");
@@ -41,6 +47,7 @@ export default function SettingsPage() {
 
     setApiKey(storedApiKey);
     setLanguage(storedLanguage || "auto");
+    setCustomInstructions(storedCustomInstructions || "");
 
     if (storedTerms) {
       try {
@@ -87,6 +94,15 @@ export default function SettingsPage() {
     setLanguage(value);
   };
 
+  const handleInstructionsSave = () => {
+    localStorage.setItem("custom_instructions", customInstructions);
+    setIsInstructionsSaved(true);
+
+    setTimeout(() => {
+      setIsInstructionsSaved(false);
+    }, 3000);
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-0 max-w-3xl">
       <Link href="/">
@@ -130,6 +146,35 @@ export default function SettingsPage() {
                 <Alert variant="default">
                   <AlertDescription>
                     API key saved successfully!
+                  </AlertDescription>
+                </Alert>
+              </CardFooter>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Instructions</CardTitle>
+              <CardDescription>
+                Add custom instructions to the AI. This will be taken into
+                account when improving the transcription.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 items-end">
+                <Textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  placeholder="Enter your custom instructions"
+                />
+                <Button onClick={handleInstructionsSave}>Save</Button>
+              </div>
+            </CardContent>
+            {isInstructionsSaved && (
+              <CardFooter>
+                <Alert variant="default">
+                  <AlertDescription>
+                    Custom instructions saved successfully!
                   </AlertDescription>
                 </Alert>
               </CardFooter>
