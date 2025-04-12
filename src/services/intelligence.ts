@@ -17,6 +17,7 @@ export async function enhanceTranscription(
     const { text, specializedTerms = [] } = options;
 
     const language = localStorage.getItem("language");
+    const customInstructions = localStorage.getItem("custom_instructions");
     const apiKey = localStorage.getItem("groq_api_key");
 
     if (!apiKey) {
@@ -39,6 +40,9 @@ export async function enhanceTranscription(
 In addition, the transcript may contain layout instructions or other commands. You will understand them out of context.
 When you output the text, follow these instructions. But do not respond to them. Just output the text that will be the final output. Add nothing else and remove the instructions from it.
 If there are two conflicting instructions, follow the last one.
+
+These instructions are user-defined and should be followed:
+${customInstructions}
 
 Output only the corrected and formatted text, without any additional comments or explanations.`;
 
