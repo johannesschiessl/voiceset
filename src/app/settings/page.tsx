@@ -14,17 +14,33 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [specializedTerms, setSpecializedTerms] = useState<string[]>([]);
   const [newTerm, setNewTerm] = useState("");
+  const [language, setLanguage] = useState("auto");
 
   useEffect(() => {
     const storedApiKey = localStorage.getItem("groq_api_key") || "";
     const storedTerms = localStorage.getItem("specialized_terms");
+    const storedLanguage = localStorage.getItem("language");
+
+    if (!storedLanguage) {
+      localStorage.setItem("language", "auto");
+      setLanguage("auto");
+    }
 
     setApiKey(storedApiKey);
+    setLanguage(storedLanguage || "auto");
 
     if (storedTerms) {
       try {
@@ -64,6 +80,11 @@ export default function SettingsPage() {
     );
     setSpecializedTerms(updatedTerms);
     localStorage.setItem("specialized_terms", JSON.stringify(updatedTerms));
+  };
+
+  const handleLanguageChange = (value: string) => {
+    localStorage.setItem("language", value);
+    setLanguage(value);
   };
 
   return (
@@ -113,6 +134,31 @@ export default function SettingsPage() {
                 </Alert>
               </CardFooter>
             )}
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Language</CardTitle>
+              <CardDescription>
+                Select the language to use for transcription. Improves
+                transcription quality. Languages not listed here may still be
+                supported, in which case please select Auto.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
           </Card>
 
           <Card>
