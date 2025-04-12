@@ -7,6 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import Recorder from "@/components/recorder";
 import { toast } from "sonner";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function HomePage() {
   const [content, setContent] = useState("");
@@ -141,9 +142,10 @@ export default function HomePage() {
       )}
 
       {/* Editor */}
-      <div className="bg-white max-w-3xl p-4 container mx-auto min-h-[400px] rounded-[1rem] border shadow-sm">
+      <div className="bg-background max-w-3xl p-4 container mx-auto min-h-[400px] rounded-[1rem] border shadow-sm">
         <div className="flex justify-end mb-2">
           <div className="flex gap-2">
+            <ModeToggle />
             <Link href="/settings">
               <Button variant="ghost" size="icon" title="Settings">
                 <Settings className="size-4" />
