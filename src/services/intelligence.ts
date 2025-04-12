@@ -16,6 +16,7 @@ export async function enhanceTranscription(
   try {
     const { text, specializedTerms = [] } = options;
 
+    const language = localStorage.getItem("language");
     const apiKey = localStorage.getItem("groq_api_key");
 
     if (!apiKey) {
@@ -26,6 +27,8 @@ export async function enhanceTranscription(
     }
 
     let systemPrompt = `You are an expert transcription editor. Your task is to format and correct the provided transcription.
+
+    The language of the transcription is ${language}.
     
 1. Fix any grammatical errors
 2. Correct misspelled words

@@ -18,10 +18,15 @@ export async function transcribeAudio(
       };
     }
 
+    const language = localStorage.getItem("language");
+
     const formData = new FormData();
     formData.append("file", audioBlob, "recording.webm");
     formData.append("model", "whisper-large-v3-turbo");
     formData.append("response_format", "json");
+    if (language && language !== "auto") {
+      formData.append("language", language);
+    }
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/audio/transcriptions",
