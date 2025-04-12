@@ -1,42 +1,22 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Copy,
-  Trash2,
-  Mic,
-  Square,
-  Settings,
-  CircleAlert,
-  Loader2,
-} from "lucide-react";
+import { Copy, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
-import { transcribeAudio } from "@/services/transcribe";
-import { enhanceTranscription } from "@/services/intelligence";
+import Recorder from "@/components/recorder";
+import { toast } from "sonner";
 
 export default function HomePage() {
   const [content, setContent] = useState("");
-  const [showCopyAlert, setShowCopyAlert] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStage, setProcessingStage] = useState<
-    "transcribing" | "enhancing" | null
-  >(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [showKeyPrompt, setShowKeyPrompt] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     const apiKey = localStorage.getItem("groq_api_key");
-
     setHasApiKey(!!apiKey);
-
     if (!apiKey) {
       setShowKeyPrompt(true);
     }
@@ -50,7 +30,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (content === "" && document.hasFocus() === false) return;
+
     localStorage.setItem("editor_content", content);
+    console.log("Saved to localStorage:", content);
   }, [content]);
 
   useEffect(() => {
@@ -64,8 +47,48 @@ export default function HomePage() {
     setContent(e.target.value);
   }
 
-  const appendToContent = (text: string) => {
-    setContent((prev) => prev + (prev ? "\n" : "") + text);
+  const insertAtCursor = (text: string) => {
+    if (!textareaRef.current) return;
+
+    const storedContent = localStorage.getItem("editor_content") || "";
+    const currentContent = storedContent !== content ? storedContent : content;
+
+    const textarea = textareaRef.current;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+
+    const newContent =
+      currentContent.substring(0, selectionStart) +
+      (selectionStart > 0 &&
+      !currentContent
+        .substring(selectionStart - 1, selectionStart)
+        .match(/[\n\s]/)
+        ? " "
+        : "") +
+      text +
+      currentContent.substring(selectionEnd);
+
+    setContent(newContent);
+
+    localStorage.setItem("editor_content", newContent);
+
+    const newCursorPosition =
+      selectionStart +
+      text.length +
+      (selectionStart > 0 &&
+      !currentContent
+        .substring(selectionStart - 1, selectionStart)
+        .match(/[\n\s]/)
+        ? 1
+        : 0);
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.selectionStart = newCursorPosition;
+        textareaRef.current.selectionEnd = newCursorPosition;
+      }
+    }, 0);
   };
 
   const handleCopyToClipboard = () => {
@@ -73,8 +96,7 @@ export default function HomePage() {
       navigator.clipboard
         .writeText(content)
         .then(() => {
-          setShowCopyAlert(true);
-          setTimeout(() => setShowCopyAlert(false), 2000);
+          toast.success("Text copied to clipboard!");
         })
         .catch((err) => {
           console.error("Failed to copy text: ", err);
@@ -84,103 +106,16 @@ export default function HomePage() {
 
   const handleClear = () => {
     setContent("");
+    localStorage.setItem("editor_content", "");
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-        setIsProcessing(true);
-        setProcessingStage("transcribing");
-      }
-    } else {
-      const apiKey = localStorage.getItem("groq_api_key");
-      if (!apiKey) {
-        setErrorMessage(
-          "No Groq API key found. Please add your API key in settings.",
-        );
-        setHasApiKey(false);
-        return;
-      }
-
-      try {
-        setErrorMessage(null);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        const mediaRecorder = new MediaRecorder(stream);
-
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (e) => {
-          audioChunksRef.current.push(e.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: "audio/webm",
-          });
-
-          stream.getTracks().forEach((track) => track.stop());
-          setIsRecording(false);
-
-          try {
-            setProcessingStage("transcribing");
-            const transcriptionResult = await transcribeAudio(audioBlob);
-
-            if (transcriptionResult.error) {
-              setErrorMessage(transcriptionResult.error);
-              if (transcriptionResult.error.includes("No Groq API key found")) {
-                setHasApiKey(false);
-              }
-              setIsProcessing(false);
-              setProcessingStage(null);
-              return;
-            }
-
-            setProcessingStage("enhancing");
-
-            const termsString = localStorage.getItem("specialized_terms");
-            const specializedTerms = termsString ? JSON.parse(termsString) : [];
-
-            const enhancementResult = await enhanceTranscription({
-              text: transcriptionResult.text,
-              specializedTerms,
-            });
-
-            if (enhancementResult.error) {
-              appendToContent(transcriptionResult.text);
-              setErrorMessage(
-                `Enhancement warning: ${enhancementResult.error}`,
-              );
-            } else {
-              appendToContent(enhancementResult.enhancedText);
-            }
-          } catch (error) {
-            setErrorMessage(
-              `Error processing audio: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            );
-          } finally {
-            setIsProcessing(false);
-            setProcessingStage(null);
-          }
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
-        setErrorMessage(
-          "Could not access microphone. Please check your permissions.",
-        );
-      }
-    }
+  const handleTranscription = (text: string) => {
+    console.log("Received transcription:", text);
+    console.log("Current content before insertion:", content);
+    insertAtCursor(text);
   };
 
   return (
@@ -205,62 +140,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Error message if present */}
-      {errorMessage && (
-        <div className="flex justify-center pb-6 z-50">
-          <Alert className="w-3xl">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              <p>{errorMessage}</p>
-              {!hasApiKey && (
-                <div className="mt-2">
-                  <Link href="/settings">
-                    <Button>Go to settings to add your API key</Button>
-                  </Link>
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
       {/* Editor */}
-
       <div className="bg-white max-w-3xl p-4 container mx-auto min-h-[400px] rounded-[1rem] border shadow-sm">
-        <div className="flex justify-between mb-2">
-          {/* Voice recording button */}
-          <Button
-            variant={isRecording ? "outline" : "default"}
-            size="sm"
-            onClick={toggleRecording}
-            disabled={isProcessing || !hasApiKey}
-            className="mr-2"
-          >
-            {!hasApiKey ? (
-              <Button variant="ghost">
-                <CircleAlert />
-                No API key
-              </Button>
-            ) : isProcessing ? (
-              <>
-                <Loader2 className="animate-spin" />
-                {processingStage === "transcribing"
-                  ? "Transcribing..."
-                  : "Enhancing..."}
-              </>
-            ) : isRecording ? (
-              <>
-                <Square />
-                Stop recording
-              </>
-            ) : (
-              <>
-                <Mic />
-                Start recording
-              </>
-            )}
-          </Button>
-
+        <div className="flex justify-end mb-2">
           <div className="flex gap-2">
             <Link href="/settings">
               <Button variant="ghost" size="icon" title="Settings">
@@ -288,12 +170,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {showCopyAlert && (
-          <Alert className="mb-2">
-            <AlertDescription>Text copied to clipboard!</AlertDescription>
-          </Alert>
-        )}
-
         <textarea
           ref={textareaRef}
           value={content}
@@ -305,6 +181,12 @@ export default function HomePage() {
           }}
         />
       </div>
+
+      {/* Voice recorder component */}
+      <Recorder
+        onTranscriptionComplete={handleTranscription}
+        disabled={!hasApiKey}
+      />
     </div>
   );
 }
