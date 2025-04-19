@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { FeedbackButton } from "@/components/feedback-button";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -40,10 +39,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="p-4">
-            {children}
-            <FeedbackButton floating />
-          </div>
+          <div className="p-4">{children}</div>
           <Toaster position="top-center" expand={false} richColors />
         </ThemeProvider>
       </body>
