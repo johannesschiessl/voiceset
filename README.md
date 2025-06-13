@@ -12,7 +12,7 @@ Voiceset is an AI-powered voice recorder that understands your intent and transc
 
 ## Demo
 
-Try it live: [voiceset.vercel.app](https://voiceset.vercel.app)
+Try it live: [voiceset.johannesschiessl.com](https://voiceset.johannesschiessl.com/)
 
 ## Contributing
 
