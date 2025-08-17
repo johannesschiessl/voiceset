@@ -8,6 +8,15 @@ import Link from "next/link";
 import Recorder from "@/components/recorder";
 import { toast } from "sonner";
 import { ModeToggle } from "@/components/mode-toggle";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 
 export default function HomePage() {
   const [content, setContent] = useState("");
@@ -160,15 +169,29 @@ export default function HomePage() {
             >
               <Copy className="size-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClear}
-              disabled={!content}
-              title="Clear text"
-            >
-              <Trash2 className="size-4" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger disabled={!content}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={!content}
+                  title="Clear text"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogTitle>Clear text input field</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This clears the entire text input field. This action cannot be
+                  undone.
+                </AlertDialogDescription>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClear}>
+                  Clear
+                </AlertDialogAction>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
