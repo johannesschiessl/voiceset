@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import {
   Select,
   SelectContent,
@@ -22,8 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { Page } from "@/App";
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  navigate: (page: Page) => void;
+}
+
+export default function SettingsPage({ navigate }: SettingsPageProps) {
   const [apiKey, setApiKey] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [specializedTerms, setSpecializedTerms] = useState<string[]>([]);
@@ -37,7 +39,7 @@ export default function SettingsPage() {
     const storedTerms = localStorage.getItem("specialized_terms");
     const storedLanguage = localStorage.getItem("language");
     const storedCustomInstructions = localStorage.getItem(
-      "custom_instructions",
+      "custom_instructions"
     );
 
     if (!storedLanguage) {
@@ -83,7 +85,7 @@ export default function SettingsPage() {
 
   const handleRemoveTerm = (termToRemove: string) => {
     const updatedTerms = specializedTerms.filter(
-      (term) => term !== termToRemove,
+      (term) => term !== termToRemove
     );
     setSpecializedTerms(updatedTerms);
     localStorage.setItem("specialized_terms", JSON.stringify(updatedTerms));
@@ -105,12 +107,10 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-0 max-w-3xl">
-      <Link href="/">
-        <Button variant="outline" className="mb-6">
-          <ArrowLeft />
-          Settings
-        </Button>
-      </Link>
+      <Button variant="outline" className="mb-6" onClick={() => navigate("home")}>
+        <ArrowLeft />
+        Settings
+      </Button>
       <div className="space-y-6">
         <div className="space-y-6">
           <Card>
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               <CardDescription>Built by Johannes Schießl.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Link
+              <a
                 href="https://github.com/johannesschiessl/Voiceset"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -286,7 +286,7 @@ export default function SettingsPage() {
                   </svg>
                   GitHub
                 </Button>
-              </Link>
+              </a>
             </CardContent>
           </Card>
         </div>

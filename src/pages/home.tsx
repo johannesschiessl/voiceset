@@ -1,10 +1,7 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { Copy, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import Link from "next/link";
 import Recorder from "@/components/recorder";
 import { toast } from "sonner";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -17,8 +14,13 @@ import {
   AlertDialogTrigger,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+import type { Page } from "@/App";
 
-export default function HomePage() {
+interface HomePageProps {
+  navigate: (page: Page) => void;
+}
+
+export default function HomePage({ navigate }: HomePageProps) {
   const [content, setContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
@@ -141,9 +143,7 @@ export default function HomePage() {
                 API key.
               </p>
               <div className="flex gap-3">
-                <Link href="/settings">
-                  <Button>Set up now</Button>
-                </Link>
+                <Button onClick={() => navigate("settings")}>Set up now</Button>
               </div>
             </AlertDescription>
           </Alert>
@@ -155,11 +155,14 @@ export default function HomePage() {
         <div className="flex justify-end mb-2">
           <div className="flex gap-2">
             <ModeToggle />
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" title="Settings">
-                <Settings className="size-4" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Settings"
+              onClick={() => navigate("settings")}
+            >
+              <Settings className="size-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
